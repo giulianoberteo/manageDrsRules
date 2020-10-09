@@ -1,7 +1,7 @@
 $vcFQDN = "vcenter-3.vcf-s1.vlabs.local"
 $vcUser = "administrator@vsphere.local"
 $vcPassword = "VMware1!"
-$vmAffinityRulesFile = ".\" + $vcFQDN + "_vmAffinityRules.csv"
+$drsAffinityRulesFile = ".\" + $vcFQDN + "_drsAffinityRules.csv"
 $drsVMHostRulesFile = ".\" + $vcFQDN + "_drsVMHostRules.csv"
 $clusterName = "s1-cl01"
 
@@ -10,19 +10,24 @@ Connect-VIServer $vcFQDN -username $vcUser -password $vcPassword
 $cluster = Get-Cluster -Name $clusterName
 
 # Check for DRS VM affinity/anti-affinity rules
-$vmAffinityRules = Get-DrsRule -Cluster $cluster
-if ($vmAffinityRules) {
-
-    $vmAffinityRules | Export-Csv $vmAffinityRulesFile
-    $vmAffinityRules | Set-DrsRule -Enabled $false
+$drsAffinityRules = Get-DrsRule -Cluster $cluster
+if ($drsAffinityRules) {
+    Write-Host "Found DRS vm affinity rules, proceeding with exporting and disabling..."
+    # Export all the existing rules to CSV so we have a snapshot of all rules before making any change
+    $drsAffinityRules | Export-Csv $drsAffinityRulesFile
+    # disabling all the DRS VM affinity/anti-affinity rules
+    $drsAffinityRules | Set-DrsRule -Enabled $false
 }
+else { Write-Host "No DRS vm affinity rules found!" }
 
 # Check for DRS VM host rules
-$vmHostRules = Get-DrsVMHostRule -Cluster $cluster
-if ($vmHostRules) {
-
-    $vmHostRules | Export-Csv $drsVMHostRulesFile
-    $vmHostRules | Set-DrsVMHostRule -Enabled $false
-
+$drsVMHostRules = Get-DrsVMHostRule -Cluster $cluster
+if ($drsVMHostRules) {
+    Write-Host "Found DRS vm host rules, proceeding with exporting and disabling..."    
+    # Export all the existing rules to CSV so we have a snapshot of all rules before making any change
+    $drsVMHostRules | Export-Csv $drsVMHostRulesFile
+    # disabling all DRS VM Host rules
+    $drsVMHostRules | Set-DrsVMHostRule -Enabled $false
 }
+else { Write-Host "No DRS vm host rules found!" }
 
